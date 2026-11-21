@@ -1,0 +1,33 @@
+name: Feature / Throughput Proposal
+description: Propose a BitTorrent BEP extension, kernel/NVMe I/O optimization, or control plane enhancement.
+title: "[FEAT] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Target Subsystem
+      options:
+        - Swarm Throughput & BDP Pipelining (internal/engine)
+        - NVMe / Disk I/O & Fast-Resume (internal/engine/storage.go)
+        - Terminal UI (internal/tui)
+        - Web Control Plane (web/)
+        - Ecosystem Integration (MCP, Browser Extension, RSS/Hooks)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Technical Problem or Bottleneck
+      placeholder: Describe the throughput bottleneck, BEP specification, or workflow improvement.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Implementation
+      placeholder: Outline the changes and how they adhere to the unslop guardrails in AGENTS.md.
+    validations:
+      required: true

@@ -1,0 +1,17 @@
+[Unit]
+Description=VeloceTorrent High-Throughput BitTorrent Engine & Local IPC Server
+Documentation=https://127.0.0.1:7878
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/vtd --addr 127.0.0.1:7878 --socket %t/velocetorrent.sock --dir %h/Downloads/VeloceTorrent
+KillSignal=SIGTERM
+TimeoutStopSec=15
+Restart=on-failure
+RestartSec=2
+LimitNOFILE=65536
+
+[Install]
+WantedBy=default.target

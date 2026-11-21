@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=VeloceTorrent
+GenericName=BitTorrent Client
+Comment=High-Throughput BitTorrent Engine, CLI & Local Web UI
+Exec=vt add %U
+Terminal=true
+Categories=Network;FileTransfer;P2P;ConsoleOnly;
+MimeType=application/x-bittorrent;x-scheme-handler/magnet;
+StartupNotify=false

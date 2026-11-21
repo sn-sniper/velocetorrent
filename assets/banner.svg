@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" width="1200" height="280" fill="none">
+  <rect width="1200" height="280" fill="#09090B"/>
+  <rect x="8" y="8" width="1184" height="264" fill="#18181B" stroke="#27272A" stroke-width="2"/>
+
+  <!-- Precision Grid Lines -->
+  <line x1="8" y1="68" x2="1192" y2="68" stroke="#27272A" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="8" y1="212" x2="1192" y2="212" stroke="#27272A" stroke-width="1" stroke-dasharray="4 4"/>
+  <line x1="280" y1="8" x2="280" y2="272" stroke="#27272A" stroke-width="1"/>
+  <line x1="900" y1="8" x2="900" y2="272" stroke="#27272A" stroke-width="1"/>
+
+  <!-- Left Hardware Emblem -->
+  <g transform="translate(56, 56)">
+    <rect width="168" height="168" rx="16" fill="#09090B" stroke="#27272A" stroke-width="2"/>
+    <rect x="14" y="14" width="10" height="10" fill="#F59E0B"/>
+    <path d="M28 48H52L76 112L64 124L28 48Z" fill="#10B981"/>
+    <path d="M84 48H140V66H118V108L131 95L143 107L109 138L75 107L87 95L100 108V66H84V48Z" fill="#FAFAFA"/>
+  </g>
+
+  <!-- Center Typography & Specifications -->
+  <text x="316" y="46" fill="#71717A" font-family="JetBrains Mono, monospace" font-size="13" font-weight="600" letter-spacing="2">
+    HIGH-THROUGHPUT BITTORRENT ENGINE // CLI // TUI // LOCAL WEB UI // MCP
+  </text>
+  <text x="316" y="128" fill="#FAFAFA" font-family="JetBrains Mono, monospace" font-size="48" font-weight="700" letter-spacing="1">
+    VELOCETORRENT
+  </text>
+  <rect x="756" y="92" width="88" height="32" fill="#10B981" fill-opacity="0.15" stroke="#10B981" stroke-width="1.5"/>
+  <text x="774" y="113" fill="#10B981" font-family="JetBrains Mono, monospace" font-size="14" font-weight="700">
+    v1.0.0
+  </text>
+
+  <text x="316" y="172" fill="#A1A1AA" font-family="JetBrains Mono, monospace" font-size="15">
+    Adaptive BDP Pipelining • 16 MiB Coalesced NVMe I/O • 10s Unchoke • &lt;5ms Fast-Resume
+  </text>
+
+  <!-- Bottom Bitfield Strip -->
+  <g transform="translate(316, 228)">
+    <rect x="0" y="0" width="44" height="18" fill="#10B981"/>
+    <rect x="52" y="0" width="44" height="18" fill="#10B981"/>
+    <rect x="104" y="0" width="44" height="18" fill="#10B981"/>
+    <rect x="156" y="0" width="44" height="18" fill="#10B981"/>
+    <rect x="208" y="0" width="44" height="18" fill="#F59E0B"/>
+    <rect x="260" y="0" width="44" height="18" fill="#10B981"/>
+    <rect x="312" y="0" width="44" height="18" fill="#10B981"/>
+    <rect x="364" y="0" width="44" height="18" fill="#10B981"/>
+    <rect x="416" y="0" width="44" height="18" fill="#27272A"/>
+    <rect x="468" y="0" width="44" height="18" fill="#10B981"/>
+  </g>
+
+  <!-- Right Live Telemetry Panel -->
+  <text x="928" y="46" fill="#71717A" font-family="JetBrains Mono, monospace" font-size="12" font-weight="600">
+    BENCHMARK TELEMETRY
+  </text>
+  <text x="928" y="102" fill="#71717A" font-family="JetBrains Mono, monospace" font-size="12">
+    SWARM VELOCITY
+  </text>
+  <text x="928" y="128" fill="#10B981" font-family="JetBrains Mono, monospace" font-size="24" font-weight="700">
+    175.5 MB/s
+  </text>
+  <text x="928" y="168" fill="#71717A" font-family="JetBrains Mono, monospace" font-size="12">
+    PEAK HEAP / IDLE RSS
+  </text>
+  <text x="928" y="194" fill="#FAFAFA" font-family="JetBrains Mono, monospace" font-size="20" font-weight="700">
+    35.2 / 14.2 MiB
+  </text>
+  <polyline points="928,252 958,244 988,248 1018,228 1048,232 1078,220 1108,223 1138,218 1168,216" fill="none" stroke="#10B981" stroke-width="2.5"/>
+</svg>

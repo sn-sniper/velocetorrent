@@ -1,0 +1,75 @@
+version: 2
+project_name: velocetorrent
+
+before:
+  hooks:
+    - sh -c "cd web && npm ci && npm run build"
+    - go mod tidy
+
+builds:
+  - id: vtd
+    main: ./cmd/daemon
+    binary: vtd
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+  - id: vt
+    main: ./cmd/cli
+    binary: vt
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - AGENTS.md
+      - deploy/**/*
+      - extensions/**/*
+
+nfpms:
+  - id: velocetorrent-deb
+    package_name: velocetorrent
+    vendor: VeloceTorrent
+    homepage: https://github.com/velocetorrent/velocetorrent
+    maintainer: VeloceTorrent Maintainers <maintainers@velocetorrent.local>
+    description: High-Throughput BitTorrent Engine, 60fps Terminal UI & Local Web Control Plane
+    license: MIT
+    formats:
+      - deb
+    bindir: /usr/local/bin
+    contents:
+      - src: deploy/sysctl/99-velocetorrent.conf
+        dst: /etc/sysctl.d/99-velocetorrent.conf
+      - src: deploy/desktop/velocetorrent.desktop
+        dst: /usr/share/applications/velocetorrent.desktop
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256

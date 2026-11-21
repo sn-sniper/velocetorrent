@@ -1,0 +1,44 @@
+name: Bug Report
+description: Report a protocol fault, storage/I/O error, TUI rendering defect, or Web UI issue.
+title: "[BUG] "
+labels: ["bug", "triage"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component / Subsystem
+      options:
+        - Core Engine (internal/engine - Picker, Storage, Peer Wire, NAT, Fast-Resume)
+        - IPC & WebSocket Server (internal/ipc - REST, Auth Token, Prometheus)
+        - Terminal UI & CLI (cmd/cli & internal/tui)
+        - Local Web Control Plane (web/ - React 19)
+        - MCP Server (vt mcp)
+        - Browser Extension (extensions/chrome-mv3)
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: OS, Filesystem & Go Version
+      placeholder: "e.g. Arch Linux 6.12 (ext4 NVMe) / Windows 11 (NTFS), Go 1.26+"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction Steps
+      placeholder: |
+        1. Run `vt add ...`
+        2. Press `[p]` in TUI or open `http://127.0.0.1:7878`
+        3. Observe error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: telemetry
+    attributes:
+      label: Telemetry / Logs / Goroutine Leak Output
+      description: Paste output from `vt ls`, `/api/state`, or `/debug/pprof/goroutineleak`.
+      render: shell

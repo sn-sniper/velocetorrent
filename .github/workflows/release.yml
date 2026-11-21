@@ -1,0 +1,48 @@
+name: Release v1.0.0
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Multi-Arch Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Go 1.26+ (Green Tea GC enabled)
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.26.0'
+
+      - name: Build Embedded React Web UI
+        run: |
+          cd web
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Run Unit, Stress & Fuzz Verification Suite
+        run: go test -v ./...
+
+      - name: Run GoReleaser (linux/amd64, linux/arm64, darwin, windows + .deb + SHA-256)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "VeloceTorrent Remote Control",
+  "version": "1.0.0",
+  "description": "Send .torrent URLs and magnet:? links directly to your local VeloceTorrent daemon (127.0.0.1:7878) with output directory selection.",
+  "permissions": ["contextMenus", "storage", "activeTab"],
+  "host_permissions": ["http://127.0.0.1:7878/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "VeloceTorrent // Control Plane",
+    "default_icon": {
+      "128": "icon-128.png"
+    }
+  },
+  "icons": {
+    "128": "icon-128.png"
+  }
+}

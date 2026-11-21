@@ -1,0 +1,56 @@
+name: CI & Fork Verification
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout Repository (Supports External Fork PRs)
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Setup Go 1.26+
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.26.0'
+
+      - name: Build React 19 Web Control Plane
+        run: |
+          cd web
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Go Vet & Static Analysis
+        run: go vet ./...
+
+      - name: Run Unit, Integration & 15-Swarm Leak Audit Suite
+        run: go test -v ./...
+
+      - name: Run Bencode Fuzz Smoke Test (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: go test -fuzz=FuzzBencodeAndMetainfoParser -fuzztime=5s ./internal/engine
+
+      - name: Compile Stripped Single-Binary Executables (vtd & vt)
+        run: |
+          go build -trimpath -ldflags="-s -w" ./cmd/daemon
+          go build -trimpath -ldflags="-s -w" ./cmd/cli

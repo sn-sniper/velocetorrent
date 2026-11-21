@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <!-- Outer Obsidian Hardware Chassis -->
+  <rect width="512" height="512" rx="48" fill="#09090B"/>
+  <rect x="12" y="12" width="488" height="488" rx="38" fill="#18181B" stroke="#27272A" stroke-width="4"/>
+
+  <!-- Precision Telemetry Grid Lines -->
+  <line x1="12" y1="128" x2="500" y2="128" stroke="#27272A" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="12" y1="384" x2="500" y2="384" stroke="#27272A" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="128" y1="12" x2="128" y2="500" stroke="#27272A" stroke-width="2" stroke-dasharray="6 6"/>
+  <line x1="384" y1="12" x2="384" y2="500" stroke="#27272A" stroke-width="2" stroke-dasharray="6 6"/>
+
+  <!-- Top-Left Technical Identifier & Amber Status LED -->
+  <rect x="40" y="40" width="14" height="14" fill="#F59E0B"/>
+  <rect x="64" y="40" width="42" height="14" fill="#27272A"/>
+  <rect x="416" y="40" width="56" height="14" fill="#10B981" fill-opacity="0.2" stroke="#10B981" stroke-width="2"/>
+
+  <!-- Piece Bitfield Matrix (Bottom Instrument Strip) -->
+  <g transform="translate(40, 436)">
+    <rect x="0" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="40" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="80" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="120" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="160" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="200" y="0" width="32" height="24" fill="#F59E0B"/>
+    <rect x="240" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="280" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="320" y="0" width="32" height="24" fill="#27272A"/>
+    <rect x="360" y="0" width="32" height="24" fill="#10B981"/>
+    <rect x="400" y="0" width="32" height="24" fill="#10B981"/>
+  </g>
+
+  <!-- Central High-Velocity VT Vector Emblem (Emerald #10B981) -->
+  <!-- Left Wing of V -->
+  <path d="M96 144H164L236 332L202 368L96 144Z" fill="#10B981"/>
+  <!-- Right Wing / Downward Throughput Arrow of VT -->
+  <path d="M260 144H416V196H358V324L396 286L432 322L332 412L232 322L268 286L306 324V196H260V144Z" fill="#FAFAFA"/>
+  <!-- High-Frequency Pulse Accent -->
+  <rect x="218" y="144" width="24" height="52" fill="#10B981"/>
+</svg>

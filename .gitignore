@@ -1,0 +1,28 @@
+# Binaries & Build Outputs
+vtd
+vt
+vtd.exe
+vt.exe
+velocetorrent-daemon.exe
+*.exe
+*.dll
+*.so
+*.dylib
+dist/
+web/dist/
+web/node_modules/
+
+# Runtime & Local State
+*.sock
+*.db
+*.db.tmp
+*.log
+*.out
+.env
+.env.local
+
+# OS & Editor Metadata
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
