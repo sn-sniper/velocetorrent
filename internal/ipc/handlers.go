@@ -221,6 +221,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/security", s.handleSecurityStatus)
 	mux.HandleFunc("/api/security/blocklist", s.handleBlocklist)
 	mux.HandleFunc("/api/hooks", s.handleLifecycleHooks)
+	mux.HandleFunc("/api/shutdown", s.handleShutdown)
 
 	// Go 1.26+ pprof & goroutineleak audit endpoints
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
@@ -801,6 +802,21 @@ func (s *Server) handleGoroutineLeakAudit(w http.ResponseWriter, r *http.Request
 		"leakedGoroutines":    leakedPeers,
 		"status":              "CLEAN",
 	})
+}
+
+func (s *Server) handleShutdown(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	_ = s.eng.FlushStateNow()
+	writeJSON(w, http.StatusOK, map[string]any{"status": "shutting_down"})
+	go func() {
+		time.Sleep(120 * time.Millisecond)
+		_ = s.eng.Close()
+		_ = s.Close()
+		os.Exit(0)
+	}()
 }
 
 func (s *Server) handleStaticOrIndex(w http.ResponseWriter, r *http.Request) {

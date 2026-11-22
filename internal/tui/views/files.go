@@ -132,10 +132,11 @@ func RenderBottomControlBar(statusMsg string, errMsg string, width int) string {
 		components.StyleEmerald.Render("[P]") + components.StyleLabel.Render(" PEERS"),
 		components.StyleEmerald.Render("[F]") + components.StyleLabel.Render(" FILES"),
 		components.StyleEmerald.Render("[B]") + components.StyleLabel.Render(" THROTTLE"),
+		components.StyleEmerald.Render("[W]") + components.StyleLabel.Render(" WEB UI"),
 		components.StyleEmerald.Render("[A]") + components.StyleLabel.Render(" ADD"),
 		components.StyleEmerald.Render("[S]") + components.StyleLabel.Render(" SWARM"),
 		components.StyleEmerald.Render("[Q]") + components.StyleLabel.Render(" DETACH"),
-	}, "   ")
+	}, "  ")
 
 	out = append(out, components.StyleHeaderBox.Width(innerWidth).Render(keys))
 	return strings.Join(out, "\n")

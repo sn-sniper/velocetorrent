@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -46,6 +48,7 @@ const (
 	ActionDeleteTorrent
 	ActionToggleThrottle
 	ActionCycleFilePriority
+	ActionOpenWebUI
 )
 
 // ResolveKeyAction maps a Bubble Tea KeyMsg to a semantic TUI KeyAction when not in text-input mode.
@@ -77,6 +80,8 @@ func ResolveKeyAction(msg tea.KeyMsg) KeyAction {
 		return ActionToggleThrottle
 	case "c", "C":
 		return ActionCycleFilePriority
+	case "w", "W":
+		return ActionOpenWebUI
 	default:
 		return ActionNone
 	}
@@ -211,6 +216,35 @@ func CycleFilePriorityCmd(client *ipc.Client, torrentID string, fileIndex int, n
 		}
 		return ActionFeedbackMsg{
 			Info: fmt.Sprintf("FILE #%d PRIORITY [%s] -> %s", fileIndex, snap.Name, strings.ToUpper(string(nextPrio))),
+		}
+	}
+}
+
+// OpenWebUICmd opens the local Web Control Plane in the user's default browser across Windows, macOS, and Linux.
+func OpenWebUICmd(tcpAddr string) tea.Cmd {
+	return func() tea.Msg {
+		if tcpAddr == "" {
+			tcpAddr = ipc.DefaultTCPAddr
+		}
+		tok, _, _ := ipc.LoadOrCreateAuthToken("")
+		targetURL := "http://" + tcpAddr
+		if tok != "" {
+			targetURL += "/?token=" + tok
+		}
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "windows":
+			cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", targetURL)
+		case "darwin":
+			cmd = exec.Command("open", targetURL)
+		default:
+			cmd = exec.Command("xdg-open", targetURL)
+		}
+		if err := cmd.Start(); err != nil {
+			return ActionFeedbackMsg{Err: err}
+		}
+		return ActionFeedbackMsg{
+			Info: fmt.Sprintf("OPENED WEB UI IN BROWSER -> http://%s", tcpAddr),
 		}
 	}
 }

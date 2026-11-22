@@ -50,6 +50,10 @@ archives:
     files:
       - README.md
       - AGENTS.md
+      - Start-VeloceTorrent.bat
+      - Start-VeloceTorrent.command
+      - start-velocetorrent.sh
+      - assets/**/*
       - deploy/**/*
       - extensions/**/*
 

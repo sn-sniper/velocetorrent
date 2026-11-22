@@ -272,6 +272,9 @@ func (m *AppModel) handleMainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case hooks.ActionToggleThrottle:
 		return m, hooks.ToggleThrottleCmd(m.client)
 
+	case hooks.ActionOpenWebUI:
+		return m, hooks.OpenWebUICmd(m.tcpAddr)
+
 	case hooks.ActionCycleFilePriority:
 		sel := m.selectedTorrent()
 		if sel != nil && len(sel.Files) > 0 {

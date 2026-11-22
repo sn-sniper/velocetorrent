@@ -175,7 +175,49 @@ func main() {
 		fmt.Fprintf(os.Stdout, "THROTTLE PROFILE -> %s (MaxDown=%s MaxUp=%s)\n",
 			snap.Profile, strings.TrimSpace(components.FormatRate(snap.MaxDownBytesPs)), strings.TrimSpace(components.FormatRate(snap.MaxUpBytesPs)))
 
-	case "token", "auth", "web":
+	case "open", "web", "start":
+		if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
+			exitWithError(err)
+		}
+		tok, _, err := ipc.LoadOrCreateAuthToken("")
+		if err != nil {
+			exitWithError(err)
+		}
+		webURL := fmt.Sprintf("http://%s/?token=%s", ipcAddr, tok)
+		_ = OpenBrowserURL(webURL)
+		fmt.Fprintf(os.Stdout, "VELOCETORRENT ONLINE // Opening Web Control Plane -> http://%s\n", ipcAddr)
+
+	case "stop", "kill":
+		client := ipc.NewClient(ipcAddr, sockPath)
+		if !client.Ping() {
+			fmt.Fprintln(os.Stdout, "DAEMON ALREADY STOPPED.")
+			return
+		}
+		if err := client.Shutdown(); err != nil {
+			exitWithError(err)
+		}
+		fmt.Fprintln(os.Stdout, "DAEMON STOPPED CLEANLY (state.db flushed).")
+
+	case "restart":
+		client := ipc.NewClient(ipcAddr, sockPath)
+		if client.Ping() {
+			_ = client.Shutdown()
+			time.Sleep(400 * time.Millisecond)
+		}
+		if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
+			exitWithError(err)
+		}
+		fmt.Fprintf(os.Stdout, "DAEMON RESTARTED ONLINE -> http://%s\n", ipcAddr)
+
+	case "install":
+		if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
+			exitWithError(err)
+		}
+		if err := InstallSystemIntegration(ipcAddr); err != nil {
+			exitWithError(err)
+		}
+
+	case "token", "auth":
 		if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
 			exitWithError(err)
 		}
@@ -588,7 +630,10 @@ func printUsage() {
 	fmt.Fprintln(os.Stdout, `VeloceTorrent CLI & Terminal UI (vt)
 
 USAGE:
-  vt                                                Start daemon (vtd) and attach 60fps TUI
+  vt                                                Auto-start daemon (vtd) and attach 60fps TUI
+  vt open | vt web | vt start                       Auto-start daemon and open Web UI in default browser
+  vt install                                        1-command OS setup (PATH, Desktop shortcut, Auto-Start, Magnet handler)
+  vt stop | vt restart                              Gracefully stop or restart the background daemon
   vt ui                                             Attach 60fps TUI to running daemon
   vt add <file.torrent|magnet> [--dir <path>]       Queue download and attach interactive TUI
   vt add <file.torrent|magnet> --detach             Queue download in headless mode and exit immediately
@@ -599,7 +644,7 @@ USAGE:
   vt dir [<path>]                                   Show or set default output directory
   vt priority <id> <file-idx> <skip|normal|high>    Set selective file download priority
   vt throttle <uncapped|background|toggle>          Switch global bandwidth profile
-  vt token [--raw] | vt web                         Auto-start daemon and print Web UI bearer token & URL
+  vt token [--raw]                                  Auto-start daemon and print Web UI bearer token & URL
   vt mcp                                            Start Model Context Protocol (MCP) stdio server
   vt completion <bash|zsh|fish|powershell>          Generate shell autocompletion script
   vt bench [--size-mb 32]                           Run Phase 4 throughput & NVMe/SSD I/O benchmark

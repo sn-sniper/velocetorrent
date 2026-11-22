@@ -84,24 +84,42 @@ velocetorrent/
 
 ---
 
-## 3. Build, Release & Shell Completions
+## 3. 1-Click Quick Start & Installation (Windows, macOS & Linux)
 
-### Single-Command Build & Install (`Makefile`)
+VeloceTorrent runs natively as a single self-contained binary on **Windows 10/11**, **macOS (Apple Silicon & Intel)**, and **Linux (x86_64 & ARM64)**.
+
+### A. Zero-Friction 1-Click Launchers
+
+| Operating System | 1-Click Launcher | One-Command Terminal Launch |
+| :--- | :--- | :--- |
+| **Windows (10 / 11)** | Double-click **`Start-VeloceTorrent.bat`** in File Explorer | `.\vt.exe open` (opens Web UI) or `.\vt.exe` (opens 60fps TUI) |
+| **macOS (M1–M4 / Intel)** | Double-click **`Start-VeloceTorrent.command`** in Finder | `./vt open` (opens Web UI) or `./vt` (opens 60fps TUI) |
+| **Linux (All Distros)** | Run **`./start-velocetorrent.sh`** | `./vt open` (opens Web UI) or `./vt` (opens 60fps TUI) |
+
+### B. 1-Command Native System Installation (`vt install`)
+
+Running **`vt install`** automatically configures VeloceTorrent for your operating system:
+
+- **Windows (`.\vt.exe install` or `.\deploy\install-windows.ps1`):**
+  - Installs `vt.exe` and `vtd.exe` into `%LOCALAPPDATA%\Programs\VeloceTorrent` and adds it to your User `PATH`.
+  - Creates **`VeloceTorrent Web UI`** and **`VeloceTorrent TUI`** shortcuts directly on your Windows Desktop.
+  - Registers `vtd.exe` in Windows Startup (`HKCU\...\Run`) and registers `vt.exe` as the default Windows `magnet:` URI handler.
+- **macOS (`./vt install` or `./deploy/install-macos.sh`):**
+  - Installs binaries to `~/.local/bin`, creates **`~/Applications/VeloceTorrent.app`** (launchable from Spotlight & Finder), and loads the `launchd` background agent (`~/Library/LaunchAgents/com.velocetorrent.daemon.plist`).
+- **Linux (`./vt install` or `./deploy/install-linux.sh`):**
+  - Installs binaries to `~/.local/bin`, enables the `systemd --user` service (`velocetorrent.service`), applies 16 MiB UDP & TCP BBR `sysctl` rules, and registers `velocetorrent.desktop` via `xdg-mime`.
+
+### C. Lifecycle & Shell Autocompletion (`bash`, `zsh`, `fish`, `powershell`)
 
 ```bash
-# Compile React Web UI, embed web/dist via //go:embed, strip symbols (-ldflags="-s -w"), and build vtd + vt:
-make build
+# Auto-start daemon and pop open http://127.0.0.1:7878 in your default browser:
+vt open
 
-# Install vtd and vt into /usr/local/bin:
-sudo make install
+# Stop or restart the background daemon cleanly on any OS:
+vt stop
+vt restart
 
-# Or run the full Linux installer (builds binaries, applies 16MB UDP sysctl, installs systemd --user unit & xdg-mime):
-./deploy/install-linux.sh
-```
-
-### Shell Autocompletion (`bash`, `zsh`, `fish`, `powershell`)
-
-```bash
+# Enable dynamic shell autocompletion:
 source <(vt completion bash)
 vt completion zsh > "${fpath[1]}/_vt"
 vt completion fish > ~/.config/fish/completions/vt.fish

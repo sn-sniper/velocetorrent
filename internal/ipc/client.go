@@ -262,6 +262,19 @@ func (c *Client) DeleteTorrent(id string, deleteData bool) error {
 	return nil
 }
 
+// Shutdown requests the running daemon to flush state.db and exit cleanly.
+func (c *Client) Shutdown() error {
+	resp, err := c.httpClient.Post(c.baseURL+"/api/shutdown", "application/json", nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return decodeAPIError(resp.Body, resp.StatusCode)
+	}
+	return nil
+}
+
 func decodeAPIError(r io.Reader, status int) error {
 	var apiErr APIError
 	if err := json.NewDecoder(r).Decode(&apiErr); err == nil && apiErr.Error != "" {
