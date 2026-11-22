@@ -187,7 +187,12 @@ func (c *Client) Pause(id string) (*engine.TorrentTelemetrySnapshot, error) {
 	return c.postTorrentAction(id, "pause")
 }
 
-// Resume resumes a paused torrent by ID or hash prefix.
+// Stop halts swarm connections and disk writes for a torrent and sets its state to STOPPED.
+func (c *Client) Stop(id string) (*engine.TorrentTelemetrySnapshot, error) {
+	return c.postTorrentAction(id, "stop")
+}
+
+// Resume resumes a paused or stopped torrent by ID or hash prefix.
 func (c *Client) Resume(id string) (*engine.TorrentTelemetrySnapshot, error) {
 	return c.postTorrentAction(id, "resume")
 }
@@ -244,9 +249,9 @@ func (c *Client) SetDefaultDir(newDir string) (*DirsResponse, error) {
 	return &res, nil
 }
 
-// DeleteTorrent removes a torrent session from the daemon.
-func (c *Client) DeleteTorrent(id string, deleteData bool) error {
-	u := fmt.Sprintf("%s/api/torrents/%s?deleteData=%v", c.baseURL, url.PathEscape(id), deleteData)
+// DeleteTorrent stops and removes a torrent session from the daemon, optionally purging downloaded files from disk.
+func (c *Client) DeleteTorrent(id string, deleteFiles bool) error {
+	u := fmt.Sprintf("%s/api/torrents/%s?delete_files=%v", c.baseURL, url.PathEscape(id), deleteFiles)
 	req, err := http.NewRequest(http.MethodDelete, u, nil)
 	if err != nil {
 		return err

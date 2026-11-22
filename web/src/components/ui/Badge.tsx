@@ -10,6 +10,7 @@ export const StatusBadge: React.FC<{ status: TorrentStatus }> = ({ status }) => 
     PREALLOCATING: 'border-amber-500/60 bg-amber-500/10 text-amber-400',
     VERIFYING: 'border-amber-500/60 bg-amber-500/10 text-amber-400',
     PAUSED: 'border-zinc-700 bg-zinc-900 text-zinc-400',
+    STOPPED: 'border-zinc-700 bg-zinc-950 text-zinc-400',
     ERROR: 'border-red-500/70 bg-red-500/10 text-red-400',
   };
 

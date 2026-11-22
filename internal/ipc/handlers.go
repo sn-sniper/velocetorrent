@@ -460,13 +460,14 @@ func (s *Server) handleTorrentByID(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, sess.Snapshot(true))
 
 		case http.MethodDelete:
-			deleteData := r.URL.Query().Get("deleteData") == "true"
-			if err := s.eng.RemoveTorrent(id, deleteData); err != nil {
+			q := r.URL.Query()
+			deleteFiles := q.Get("delete_files") == "true" || q.Get("deleteData") == "true" || q.Get("deleteFiles") == "true"
+			if err := s.eng.DeleteTorrent(id, deleteFiles); err != nil {
 				writeError(w, err)
 				return
 			}
 			s.broadcaster.BroadcastImmediate()
-			writeJSON(w, http.StatusOK, map[string]any{"deleted": id})
+			writeJSON(w, http.StatusOK, map[string]any{"deleted": id, "deleteFiles": deleteFiles})
 
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -510,6 +511,11 @@ func (s *Server) handleTorrentByID(w http.ResponseWriter, r *http.Request) {
 	switch action {
 	case "pause":
 		if err := s.eng.PauseTorrent(id); err != nil {
+			writeError(w, err)
+			return
+		}
+	case "stop":
+		if err := s.eng.StopTorrent(id); err != nil {
 			writeError(w, err)
 			return
 		}

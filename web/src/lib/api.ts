@@ -105,6 +105,13 @@ export async function toggleTorrentPause(id: string): Promise<TorrentTelemetrySn
   return handleResponse<TorrentTelemetrySnapshot>(res);
 }
 
+export async function stopTorrent(id: string): Promise<TorrentTelemetrySnapshot> {
+  const res = await fetch(`${API_BASE}/api/torrents/${encodeURIComponent(id)}/stop`, {
+    method: 'POST',
+  });
+  return handleResponse<TorrentTelemetrySnapshot>(res);
+}
+
 export async function relocateTorrentDir(
   id: string,
   outputDir: string
@@ -151,14 +158,14 @@ export async function toggleBandwidthThrottle(): Promise<ThrottleSnapshot> {
   return handleResponse<ThrottleSnapshot>(res);
 }
 
-export async function deleteTorrent(id: string, deleteData = false): Promise<void> {
+export async function deleteTorrent(id: string, deleteFiles = false): Promise<void> {
   const res = await fetch(
-    `${API_BASE}/api/torrents/${encodeURIComponent(id)}?deleteData=${deleteData}`,
+    `${API_BASE}/api/torrents/${encodeURIComponent(id)}?delete_files=${deleteFiles}`,
     {
       method: 'DELETE',
     }
   );
-  await handleResponse<{ deleted: string }>(res);
+  await handleResponse<{ deleted: string; deleteFiles?: boolean }>(res);
 }
 
 export async function fetchDirs(): Promise<DirsResponse> {

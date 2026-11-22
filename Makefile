@@ -2,7 +2,7 @@ PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
 LDFLAGS := -s -w
 
-.PHONY: all web build install test fuzz bench completions clean
+.PHONY: all web build release-setup install test fuzz bench completions clean
 
 all: build
 
@@ -12,6 +12,13 @@ web:
 build: web
 	go build -trimpath -ldflags="$(LDFLAGS)" -o vtd ./cmd/daemon
 	go build -trimpath -ldflags="$(LDFLAGS)" -o vt ./cmd/cli
+
+release-setup: web
+	chmod +x deploy/setup/setup-linux.sh deploy/setup/setup-macos.command
+	CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o vtd ./cmd/daemon
+	CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o vt ./cmd/cli
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o VeloceTorrent-Setup.exe ./cmd/setup
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags="$(LDFLAGS)" -o deploy/setup/VeloceTorrent-Setup.exe ./cmd/setup
 
 install: build
 	install -d "$(DESTDIR)$(BINDIR)"
@@ -35,5 +42,5 @@ bench:
 	go test -bench=BenchmarkHighThroughputSwarmTransfer -benchmem ./internal/engine
 
 clean:
-	rm -f vtd vt vtd.exe vt.exe
+	rm -f vtd vt vtd.exe vt.exe VeloceTorrent-Setup.exe deploy/setup/VeloceTorrent-Setup.exe
 	rm -rf web/dist deploy/completions

@@ -480,6 +480,16 @@ func (e *Engine) PauseTorrent(id string) error {
 	return nil
 }
 
+// StopTorrent halts all swarm connections, flushes pending disk buffers, and transitions the torrent to STOPPED.
+func (e *Engine) StopTorrent(id string) error {
+	s, ok := e.GetSession(id)
+	if !ok {
+		return fmt.Errorf("torrent %q not found", id)
+	}
+	s.Stop()
+	return nil
+}
+
 // ResumeTorrent resumes network activity for the specified torrent ID.
 func (e *Engine) ResumeTorrent(id string) error {
 	s, ok := e.GetSession(id)
@@ -539,6 +549,11 @@ func (e *Engine) SetStreamMode(id string, enabled bool) error {
 	return nil
 }
 
+// DeleteTorrent stops a torrent session, removes it from state.db, and optionally purges downloaded files from disk.
+func (e *Engine) DeleteTorrent(id string, deleteFiles bool) error {
+	return e.RemoveTorrent(id, deleteFiles)
+}
+
 // RemoveTorrent stops and removes a torrent session, optionally deleting its on-disk files.
 func (e *Engine) RemoveTorrent(id string, deleteData bool) error {
 	s, ok := e.GetSession(id)
@@ -556,6 +571,7 @@ func (e *Engine) RemoveTorrent(id string, deleteData bool) error {
 	}
 	e.mu.Unlock()
 
+	s.Stop()
 	s.Close()
 	if deleteData && s.storage != nil {
 		outDir := s.OutputDir()
@@ -564,6 +580,7 @@ func (e *Engine) RemoveTorrent(id string, deleteData bool) error {
 		}
 	}
 	e.MarkStateDirty()
+	_ = e.FlushStateNow()
 	return nil
 }
 
@@ -1180,6 +1197,30 @@ func (s *TorrentSession) Pause() {
 		s.telemetry.currentUpSpeed.Store(0)
 		s.engine.MarkStateDirty()
 	}
+}
+
+// Stop halts all active swarm peer connections, flushes pending disk writes, and transitions state to STOPPED.
+func (s *TorrentSession) Stop() {
+	s.paused.Store(true)
+	s.mu.Lock()
+	s.status = StatusStopped
+	peers := make([]*PeerConn, 0, len(s.peers))
+	for _, p := range s.peers {
+		peers = append(peers, p)
+	}
+	s.peers = make(map[string]*PeerConn)
+	s.mu.Unlock()
+
+	for _, p := range peers {
+		p.Close()
+	}
+	if s.storage != nil {
+		s.storage.SyncAll()
+	}
+	s.telemetry.activePeers.Store(0)
+	s.telemetry.currentDownSpeed.Store(0)
+	s.telemetry.currentUpSpeed.Store(0)
+	s.engine.MarkStateDirty()
 }
 
 // Resume restarts peer pipeline requests after a pause.

@@ -27,6 +27,7 @@ const (
 	ModalNone ModalMode = iota
 	ModalChangeDir
 	ModalAddTorrent
+	ModalConfirmDelete
 )
 
 // AppModel is the root Bubble Tea state model for VeloceTorrent's terminal UI.
@@ -108,6 +109,12 @@ func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, hooks.FetchTelemetryCmd(m.client)
 
+	case tea.MouseMsg:
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y <= 2 {
+			return m, hooks.OpenWebUICmd(m.tcpAddr)
+		}
+		return m, nil
+
 	case tea.KeyMsg:
 		if m.modalMode != ModalNone {
 			return m.handleModalKey(msg)
@@ -118,6 +125,28 @@ func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *AppModel) handleModalKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.modalMode == ModalConfirmDelete {
+		id := m.selectedTorrentID()
+		switch msg.String() {
+		case "y", "Y":
+			m.modalMode = ModalNone
+			if id != "" {
+				return m, hooks.DeleteTorrentCmd(m.client, id, false)
+			}
+			return m, nil
+		case "D", "d":
+			m.modalMode = ModalNone
+			if id != "" {
+				return m, hooks.DeleteTorrentCmd(m.client, id, true)
+			}
+			return m, nil
+		case "esc", "n", "N", "q":
+			m.modalMode = ModalNone
+			return m, nil
+		}
+		return m, nil
+	}
+
 	switch msg.Type {
 	case tea.KeyEsc:
 		m.modalMode = ModalNone
@@ -259,13 +288,19 @@ func (m *AppModel) handleMainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.errorBanner = ""
 		return m, nil
 
+	case hooks.ActionStopTorrent:
+		id := m.selectedTorrentID()
+		if id != "" {
+			return m, hooks.StopTorrentCmd(m.client, id)
+		}
+		return m, nil
+
 	case hooks.ActionSpawnSynthetic:
 		return m, hooks.SpawnSyntheticSwarmCmd(m.tcpAddr)
 
 	case hooks.ActionDeleteTorrent:
-		id := m.selectedTorrentID()
-		if id != "" {
-			return m, hooks.DeleteTorrentCmd(m.client, id)
+		if m.selectedTorrent() != nil {
+			m.modalMode = ModalConfirmDelete
 		}
 		return m, nil
 
@@ -352,6 +387,10 @@ func (m *AppModel) View() string {
 			defDir = m.snapshot.DefaultOutputDir
 		}
 		sections = append(sections, views.RenderAddInputModal(m.inputBuffer, defDir, m.width))
+	} else if m.modalMode == ModalConfirmDelete {
+		if sel := m.selectedTorrent(); sel != nil {
+			sections = append(sections, views.RenderDeleteConfirmModal(sel.Name, sel.OutputDir, m.width))
+		}
 	}
 
 	sections = append(sections, views.RenderBottomControlBar(m.statusBanner, m.errorBanner, m.width))
@@ -361,7 +400,7 @@ func (m *AppModel) View() string {
 // Run attaches the interactive Bubble Tea TUI to the user's terminal.
 func Run(client *ipc.Client, tcpAddr string) error {
 	model := NewAppModel(client, tcpAddr)
-	prog := tea.NewProgram(model, tea.WithAltScreen())
+	prog := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	_, err := prog.Run()
 	return err
 }

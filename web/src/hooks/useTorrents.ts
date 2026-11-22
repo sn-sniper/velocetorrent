@@ -7,6 +7,7 @@ import {
   setTorrentFilePriority,
   setTorrentStreamMode,
   spawnSyntheticSwarm,
+  stopTorrent,
   toggleBandwidthThrottle,
   toggleTorrentPause,
   uploadTorrentFile,
@@ -66,6 +67,17 @@ export function useTorrents() {
     },
   });
 
+  const stopMutation = useMutation({
+    mutationFn: (id: string) => stopTorrent(id),
+    onSuccess: () => {
+      setActionError(null);
+      invalidate();
+    },
+    onError: (err: Error) => {
+      setActionError(err.message);
+    },
+  });
+
   const relocateMutation = useMutation({
     mutationFn: ({ id, outputDir }: { id: string; outputDir: string }) =>
       relocateTorrentDir(id, outputDir),
@@ -79,8 +91,8 @@ export function useTorrents() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ id, deleteData }: { id: string; deleteData?: boolean }) =>
-      deleteTorrent(id, deleteData),
+    mutationFn: ({ id, deleteFiles }: { id: string; deleteFiles?: boolean }) =>
+      deleteTorrent(id, Boolean(deleteFiles)),
     onSuccess: () => {
       setActionError(null);
       invalidate();
@@ -139,6 +151,7 @@ export function useTorrents() {
     uploadFile: uploadFileMutation.mutateAsync,
     spawnSynthetic: syntheticMutation.mutateAsync,
     togglePause: togglePauseMutation.mutateAsync,
+    stopTorrent: stopMutation.mutateAsync,
     relocateDir: relocateMutation.mutateAsync,
     removeTorrent: deleteMutation.mutateAsync,
     setFilePriority: filePriorityMutation.mutateAsync,

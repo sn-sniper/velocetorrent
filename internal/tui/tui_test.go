@@ -62,6 +62,25 @@ func TestAppModelKeyBindingsAndViews(t *testing.T) {
 	if !strings.Contains(dashOut, "archlinux-x86_64.iso") {
 		t.Fatalf("expected dashboard view to render torrent name")
 	}
+	if !strings.Contains(dashOut, "[w] Web UI") {
+		t.Fatalf("expected top telemetry bar to render [w] Web UI action badge")
+	}
+
+	// Press 'x' -> open Delete Confirmation Modal
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'x'}})
+	m = updated.(*AppModel)
+	if m.modalMode != ModalConfirmDelete {
+		t.Fatalf("expected ModalConfirmDelete after pressing 'x'")
+	}
+	if !strings.Contains(m.View(), "Delete torrent") || !strings.Contains(m.View(), "[D] Delete files") {
+		t.Fatalf("expected inline delete confirmation prompt in View()")
+	}
+	// Cancel with Esc
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(*AppModel)
+	if m.modalMode != ModalNone {
+		t.Fatalf("expected ModalNone after pressing Esc")
+	}
 
 	// Press 'p' -> switch to Peer Inspector
 	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})

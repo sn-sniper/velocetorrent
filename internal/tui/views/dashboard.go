@@ -25,8 +25,9 @@ func RenderTopTelemetryBar(snap *engine.EngineTelemetrySnapshot, width int, acti
 	queueMetric := components.StyleLabel.Render("QUEUE ") + components.StyleValue.Render(fmt.Sprintf("D:%-2d H:%-2d", snap.GlobalDiskQueue, snap.GlobalHashQueue))
 	freeMetric := components.StyleLabel.Render("FREE ") + components.StyleValue.Render(components.FormatBytes(int64(snap.DiskFreeBytes)))
 	viewBadge := components.StyleAmber.Render("[" + activeTab + "]")
+	webUIBadge := components.StyleEmerald.Render("[w] Web UI")
 
-	line1 := strings.Join([]string{title, downMetric, upMetric, swarmMetric, iopsMetric, queueMetric, freeMetric, viewBadge}, "   ")
+	line1 := strings.Join([]string{title, downMetric, upMetric, swarmMetric, iopsMetric, queueMetric, freeMetric, viewBadge, webUIBadge}, "   ")
 	line2 := components.StyleLabel.Render("DEFAULT DIR ") + components.StyleValue.Render(components.TruncateMiddle(snap.DefaultOutputDir, max(32, width-18)))
 
 	return components.StyleHeaderBox.Width(max(40, width-2)).Render(line1 + "\n" + line2)

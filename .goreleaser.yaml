@@ -41,6 +41,21 @@ builds:
       - amd64
       - arm64
 
+  - id: setup
+    main: ./cmd/setup
+    binary: VeloceTorrent-Setup
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
 archives:
   - format: tar.gz
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"

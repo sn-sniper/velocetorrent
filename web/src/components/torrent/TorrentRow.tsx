@@ -12,10 +12,11 @@ interface TorrentRowProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   onTogglePause: (id: string) => void;
+  onStop: (id: string) => void;
   onRelocateDir: (id: string, newDir: string) => Promise<unknown>;
   onSetFilePriority: (id: string, fileIndex: number, priority: FilePriority) => Promise<unknown>;
   onToggleStreamMode: (id: string, enabled: boolean) => Promise<unknown>;
-  onRemove: (id: string, deleteData: boolean) => void;
+  onRemove: (id: string, deleteFiles: boolean) => void;
 }
 
 const RowVelocitySparkline: React.FC<{ history: number[]; active: boolean }> = ({
@@ -59,6 +60,7 @@ export const TorrentRow: React.FC<TorrentRowProps> = ({
   isExpanded,
   onToggleExpand,
   onTogglePause,
+  onStop,
   onRelocateDir,
   onSetFilePriority,
   onToggleStreamMode,
@@ -67,6 +69,8 @@ export const TorrentRow: React.FC<TorrentRowProps> = ({
   const [inspectorTab, setInspectorTab] = useState<'PIECES' | 'PEERS' | 'FILES' | 'DIR'>('PIECES');
   const [newDirInput, setNewDirInput] = useState(torrent.outputDir);
   const [isRelocating, setIsRelocating] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleteFilesFromDisk, setDeleteFilesFromDisk] = useState(false);
 
   // Rolling 60-sample buffer for this torrent's custom <svg> velocity sparkline
   const rateHistoryRef = useRef<number[]>(new Array(30).fill(0));
@@ -75,7 +79,8 @@ export const TorrentRow: React.FC<TorrentRowProps> = ({
     rateHistoryRef.current = next;
   }, [torrent.downBytesPs, torrent.verifiedBytes]);
 
-  const isPaused = torrent.status === 'PAUSED';
+  const isPaused = torrent.status === 'PAUSED' || torrent.status === 'STOPPED';
+  const isStopped = torrent.status === 'STOPPED';
   const barColor =
     torrent.status === 'DOWNLOADING' ||
     torrent.status === 'SEEDING' ||
@@ -106,7 +111,7 @@ export const TorrentRow: React.FC<TorrentRowProps> = ({
       <div className="grid grid-cols-12 items-center gap-2 px-3 py-2.5 text-xs">
         {/* Name & InfoHash */}
         <div
-          className="col-span-12 lg:col-span-3 flex flex-col gap-0.5 cursor-pointer"
+          className="col-span-12 lg:col-span-2 flex flex-col gap-0.5 cursor-pointer"
           onClick={onToggleExpand}
         >
           <div className="flex items-center gap-2">
@@ -172,7 +177,7 @@ export const TorrentRow: React.FC<TorrentRowProps> = ({
         </div>
 
         {/* Controls */}
-        <div className="col-span-8 lg:col-span-1 flex items-center justify-end gap-1">
+        <div className="col-span-8 lg:col-span-2 flex items-center justify-end gap-1">
           <Button
             variant={isPaused ? 'primary' : 'secondary'}
             size="xs"
@@ -180,19 +185,72 @@ export const TorrentRow: React.FC<TorrentRowProps> = ({
           >
             {isPaused ? 'RESUME' : 'PAUSE'}
           </Button>
-          <Button variant="ghost" size="xs" onClick={onToggleExpand}>
-            {isExpanded ? 'HIDE' : 'INSPECT'}
+          <Button
+            variant="secondary"
+            size="xs"
+            disabled={isStopped}
+            onClick={() => onStop(torrent.id)}
+            title="Halt swarm connections and flush disk buffers"
+          >
+            STOP
           </Button>
           <Button
             variant="danger"
             size="xs"
-            onClick={() => onRemove(torrent.id, false)}
-            title="Remove transfer from session"
+            onClick={() => {
+              setDeleteFilesFromDisk(false);
+              setConfirmDeleteOpen((prev) => !prev);
+            }}
+            title="Delete torrent from session"
           >
-            ×
+            DELETE
+          </Button>
+          <Button variant="ghost" size="xs" onClick={onToggleExpand}>
+            {isExpanded ? 'HIDE' : 'INSPECT'}
           </Button>
         </div>
       </div>
+
+      {/* Inline Delete Confirmation Popover */}
+      {confirmDeleteOpen && (
+        <div className="border-t border-red-900/60 bg-zinc-950 px-3 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-red-400 font-semibold uppercase">
+              DELETE TORRENT // {torrent.name}
+            </span>
+            <label className="flex items-center gap-2 text-zinc-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={deleteFilesFromDisk}
+                onChange={(e) => setDeleteFilesFromDisk(e.target.checked)}
+                className="accent-red-500"
+              />
+              Also delete downloaded files from disk ({torrent.outputDir})
+            </label>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="secondary"
+              size="xs"
+              onClick={() => setConfirmDeleteOpen(false)}
+            >
+              CANCEL
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="xs"
+              onClick={() => {
+                setConfirmDeleteOpen(false);
+                onRemove(torrent.id, deleteFilesFromDisk);
+              }}
+            >
+              {deleteFilesFromDisk ? 'DELETE + PURGE FILES' : 'CONFIRM DELETE'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Expandable Hardware Telemetry Drawer */}
       {isExpanded && (

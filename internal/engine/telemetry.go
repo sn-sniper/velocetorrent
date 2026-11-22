@@ -27,6 +27,7 @@ const (
 	StatusVerifying   TorrentStatus = "VERIFYING"
 	StatusSeeding     TorrentStatus = "SEEDING"
 	StatusPaused      TorrentStatus = "PAUSED"
+	StatusStopped     TorrentStatus = "STOPPED"
 	StatusCompleted   TorrentStatus = "COMPLETED"
 	StatusError       TorrentStatus = "ERROR"
 )

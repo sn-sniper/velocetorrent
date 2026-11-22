@@ -113,6 +113,21 @@ func RenderAddInputModal(inputValue string, defaultDir string, width int) string
 	return components.StyleActivePanel.Width(innerWidth).Render(strings.Join(lines, "\n"))
 }
 
+// RenderDeleteConfirmModal renders the inline confirmation prompt for deleting a torrent (`[x] / [Delete]`).
+func RenderDeleteConfirmModal(torrentName string, outputDir string, width int) string {
+	innerWidth := max(50, width-4)
+	var lines []string
+	lines = append(lines, components.StyleRed.Render(fmt.Sprintf("Delete torrent %q?", torrentName)))
+	lines = append(lines, components.StyleLabel.Render("TARGET DIR: ")+components.StyleValue.Render(outputDir))
+	lines = append(lines, "")
+	lines = append(lines, fmt.Sprintf("%s Keep files   /   %s Delete files   /   %s Cancel",
+		components.StyleEmerald.Render("[y]"),
+		components.StyleRed.Render("[D]"),
+		components.StyleLabel.Render("[Esc]"),
+	))
+	return components.StyleErrorBanner.Width(innerWidth).Render(strings.Join(lines, "\n"))
+}
+
 // RenderBottomControlBar renders the persistent keyboard shortcut and status/error bar.
 func RenderBottomControlBar(statusMsg string, errMsg string, width int) string {
 	innerWidth := max(50, width-4)
@@ -127,14 +142,15 @@ func RenderBottomControlBar(statusMsg string, errMsg string, width int) string {
 	}
 
 	keys := strings.Join([]string{
-		components.StyleEmerald.Render("[SPACE]") + components.StyleLabel.Render(" PAUSE"),
+		components.StyleEmerald.Render("[SPACE]") + components.StyleLabel.Render(" PAUSE/RESUME"),
+		components.StyleEmerald.Render("[S]") + components.StyleLabel.Render(" STOP"),
+		components.StyleEmerald.Render("[X]") + components.StyleLabel.Render(" DELETE"),
 		components.StyleEmerald.Render("[D]") + components.StyleLabel.Render(" DIR"),
 		components.StyleEmerald.Render("[P]") + components.StyleLabel.Render(" PEERS"),
 		components.StyleEmerald.Render("[F]") + components.StyleLabel.Render(" FILES"),
 		components.StyleEmerald.Render("[B]") + components.StyleLabel.Render(" THROTTLE"),
-		components.StyleEmerald.Render("[W]") + components.StyleLabel.Render(" WEB UI"),
+		components.StyleEmerald.Render("[w]") + components.StyleLabel.Render(" Web UI"),
 		components.StyleEmerald.Render("[A]") + components.StyleLabel.Render(" ADD"),
-		components.StyleEmerald.Render("[S]") + components.StyleLabel.Render(" SWARM"),
 		components.StyleEmerald.Render("[Q]") + components.StyleLabel.Render(" DETACH"),
 	}, "  ")
 

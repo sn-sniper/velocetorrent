@@ -44,6 +44,7 @@ const (
 	ActionInspectFiles
 	ActionDashboardView
 	ActionOpenAddModal
+	ActionStopTorrent
 	ActionSpawnSynthetic
 	ActionDeleteTorrent
 	ActionToggleThrottle
@@ -62,6 +63,10 @@ func ResolveKeyAction(msg tea.KeyMsg) KeyAction {
 		return ActionCursorDown
 	case " ":
 		return ActionTogglePause
+	case "s":
+		return ActionStopTorrent
+	case "S":
+		return ActionSpawnSynthetic
 	case "d", "D":
 		return ActionOpenDirModal
 	case "p", "P":
@@ -72,9 +77,7 @@ func ResolveKeyAction(msg tea.KeyMsg) KeyAction {
 		return ActionDashboardView
 	case "a", "A":
 		return ActionOpenAddModal
-	case "s", "S":
-		return ActionSpawnSynthetic
-	case "x", "delete":
+	case "x", "X", "delete":
 		return ActionDeleteTorrent
 	case "b", "B":
 		return ActionToggleThrottle
@@ -182,14 +185,35 @@ func SpawnSyntheticSwarmCmd(tcpAddr string) tea.Cmd {
 	}
 }
 
-// DeleteTorrentCmd removes a torrent from the daemon.
-func DeleteTorrentCmd(client *ipc.Client, torrentID string) tea.Cmd {
+// StopTorrentCmd halts a torrent's swarm connections and transitions its state to STOPPED.
+func StopTorrentCmd(client *ipc.Client, torrentID string) tea.Cmd {
 	return func() tea.Msg {
-		if err := client.DeleteTorrent(torrentID, false); err != nil {
+		snap, err := client.Stop(torrentID)
+		if err != nil {
 			return ActionFeedbackMsg{Err: err}
 		}
 		return ActionFeedbackMsg{
-			Info: fmt.Sprintf("REMOVED TORRENT %s", torrentID[:10]),
+			Info: fmt.Sprintf("STOPPED: %s -> %s", snap.Name, snap.Status),
+		}
+	}
+}
+
+// DeleteTorrentCmd removes a torrent from the daemon, optionally deleting downloaded files from disk.
+func DeleteTorrentCmd(client *ipc.Client, torrentID string, deleteFiles bool) tea.Cmd {
+	return func() tea.Msg {
+		if err := client.DeleteTorrent(torrentID, deleteFiles); err != nil {
+			return ActionFeedbackMsg{Err: err}
+		}
+		mode := "KEPT FILES"
+		if deleteFiles {
+			mode = "PURGED FILES FROM DISK"
+		}
+		shortID := torrentID
+		if len(shortID) > 10 {
+			shortID = shortID[:10]
+		}
+		return ActionFeedbackMsg{
+			Info: fmt.Sprintf("DELETED TORRENT %s (%s)", shortID, mode),
 		}
 	}
 }

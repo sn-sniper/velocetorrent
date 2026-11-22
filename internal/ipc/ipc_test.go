@@ -209,4 +209,23 @@ func TestIPCServerRESTAndWebSocketTelemetry(t *testing.T) {
 	if err != nil || thSnap.Profile != engine.ProfileBackground {
 		t.Fatalf("expected BACKGROUND profile after toggle, got %+v (err=%v)", thSnap, err)
 	}
+
+	// 9. Test Torrent Stop & Delete (with delete_files=true) over IPC
+	stoppedSnap, err := client.Stop(addedSnap.ID)
+	if err != nil {
+		t.Fatalf("failed to stop torrent via IPC: %v", err)
+	}
+	if stoppedSnap.Status != engine.StatusStopped {
+		t.Fatalf("expected STOPPED status after Stop(), got %s", stoppedSnap.Status)
+	}
+	if err := client.DeleteTorrent(addedSnap.ID, true); err != nil {
+		t.Fatalf("failed to delete torrent via IPC: %v", err)
+	}
+	postDeleteState, err := client.FetchState()
+	if err != nil {
+		t.Fatalf("failed to get state after delete: %v", err)
+	}
+	if len(postDeleteState.Torrents) != 0 {
+		t.Fatalf("expected 0 torrents after DeleteTorrent, got %d", len(postDeleteState.Torrents))
+	}
 }

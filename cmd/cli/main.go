@@ -97,17 +97,22 @@ func main() {
 
 	case "rm", "remove", "delete":
 		if len(args) < 2 {
-			exitWithError(errors.New("missing torrent ID or prefix\nUsage: vt rm <id> [--delete-data]"))
+			exitWithError(errors.New("missing torrent ID or prefix\nUsage: vt rm <id> [--delete-files]"))
 		}
-		deleteData := len(args) > 2 && (args[2] == "--delete-data" || args[2] == "-d")
+		deleteFiles := false
+		for _, flagArg := range args[2:] {
+			if flagArg == "--delete-files" || flagArg == "--delete-data" || flagArg == "-d" {
+				deleteFiles = true
+			}
+		}
 		if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
 			exitWithError(err)
 		}
 		client := ipc.NewClient(ipcAddr, sockPath)
-		if err := client.DeleteTorrent(args[1], deleteData); err != nil {
+		if err := client.DeleteTorrent(args[1], deleteFiles); err != nil {
 			exitWithError(err)
 		}
-		fmt.Fprintf(os.Stdout, "REMOVED  ID=%s  DeleteData=%v\n", args[1], deleteData)
+		fmt.Fprintf(os.Stdout, "DELETED  ID=%s  DeleteFiles=%v\n", args[1], deleteFiles)
 
 	case "dir":
 		if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
@@ -187,7 +192,30 @@ func main() {
 		_ = OpenBrowserURL(webURL)
 		fmt.Fprintf(os.Stdout, "VELOCETORRENT ONLINE // Opening Web Control Plane -> http://%s\n", ipcAddr)
 
-	case "stop", "kill":
+	case "stop":
+		if len(args) >= 2 && args[1] != "--daemon" {
+			if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
+				exitWithError(err)
+			}
+			client := ipc.NewClient(ipcAddr, sockPath)
+			snap, err := client.Stop(args[1])
+			if err != nil {
+				exitWithError(err)
+			}
+			fmt.Fprintf(os.Stdout, "STOPPED  InfoHash=%s  Name=%q  Status=%s\n", snap.InfoHash, snap.Name, snap.Status)
+			return
+		}
+		client := ipc.NewClient(ipcAddr, sockPath)
+		if !client.Ping() {
+			fmt.Fprintln(os.Stdout, "DAEMON ALREADY STOPPED.")
+			return
+		}
+		if err := client.Shutdown(); err != nil {
+			exitWithError(err)
+		}
+		fmt.Fprintln(os.Stdout, "DAEMON STOPPED CLEANLY (state.db flushed).")
+
+	case "kill", "shutdown":
 		client := ipc.NewClient(ipcAddr, sockPath)
 		if !client.Ping() {
 			fmt.Fprintln(os.Stdout, "DAEMON ALREADY STOPPED.")

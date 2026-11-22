@@ -20,6 +20,7 @@ export const App: React.FC = () => {
     uploadFile,
     spawnSynthetic,
     togglePause,
+    stopTorrent,
     relocateDir,
     removeTorrent,
     setFilePriority,
@@ -96,7 +97,7 @@ export const App: React.FC = () => {
         <section className="border border-zinc-800 bg-zinc-900">
           {/* Table Header */}
           <div className="grid grid-cols-12 items-center gap-2 px-3 py-2 border-b border-zinc-800 bg-zinc-950 font-mono text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
-            <div className="col-span-12 lg:col-span-3">
+            <div className="col-span-12 lg:col-span-2">
               TRANSFER ({torrents.length})
             </div>
             <div className="hidden lg:block lg:col-span-1">STATE</div>
@@ -106,7 +107,7 @@ export const App: React.FC = () => {
             <div className="hidden lg:block lg:col-span-1 text-right">UP</div>
             <div className="hidden lg:block lg:col-span-1 text-right">ETA</div>
             <div className="hidden lg:block lg:col-span-1 text-right">SWARM</div>
-            <div className="hidden lg:block lg:col-span-1 text-right">CONTROL</div>
+            <div className="hidden lg:block lg:col-span-2 text-right">CONTROL</div>
           </div>
 
           {/* Rows */}
@@ -119,12 +120,13 @@ export const App: React.FC = () => {
                 isExpanded={expandedIDs[t.id] ?? index === 0}
                 onToggleExpand={() => toggleExpand(t.id)}
                 onTogglePause={(id) => void togglePause(id)}
+                onStop={(id) => void stopTorrent(id)}
                 onRelocateDir={(id, newDir) => relocateDir({ id, outputDir: newDir })}
                 onSetFilePriority={(id, fileIndex, priority) =>
                   setFilePriority({ id, fileIndex, priority })
                 }
                 onToggleStreamMode={(id, enabled) => setStreamMode({ id, enabled })}
-                onRemove={(id, deleteData) => void removeTorrent({ id, deleteData })}
+                onRemove={(id, deleteFiles) => void removeTorrent({ id, deleteFiles })}
               />
             ))}
           </div>

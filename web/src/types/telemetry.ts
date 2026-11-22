@@ -7,6 +7,7 @@ export type TorrentStatus =
   | 'VERIFYING'
   | 'SEEDING'
   | 'PAUSED'
+  | 'STOPPED'
   | 'COMPLETED'
   | 'ERROR';
 
