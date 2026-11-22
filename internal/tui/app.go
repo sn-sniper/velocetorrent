@@ -31,18 +31,19 @@ const (
 
 // AppModel is the root Bubble Tea state model for VeloceTorrent's terminal UI.
 type AppModel struct {
-	client       *ipc.Client
-	tcpAddr      string
-	snapshot     *engine.EngineTelemetrySnapshot
-	selectedIdx  int
-	viewMode     ViewMode
-	modalMode    ModalMode
-	inputBuffer  string
-	savedDirIdx  int
-	statusBanner string
-	errorBanner  string
-	width        int
-	height       int
+	client        *ipc.Client
+	tcpAddr       string
+	snapshot      *engine.EngineTelemetrySnapshot
+	selectedIdx   int
+	viewMode      ViewMode
+	modalMode     ModalMode
+	inputBuffer   string
+	inputPristine bool
+	savedDirIdx   int
+	statusBanner  string
+	errorBanner   string
+	width         int
+	height        int
 }
 
 // NewAppModel creates a new Bubble Tea model connected to the local IPC client.
@@ -121,16 +122,28 @@ func (m *AppModel) handleModalKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case tea.KeyEsc:
 		m.modalMode = ModalNone
 		m.inputBuffer = ""
+		m.inputPristine = false
+		return m, nil
+
+	case tea.KeyCtrlU, tea.KeyCtrlW:
+		m.inputBuffer = ""
+		m.inputPristine = false
 		return m, nil
 
 	case tea.KeyTab:
 		if m.modalMode == ModalChangeDir && m.snapshot != nil && len(m.snapshot.SavedDirs) > 0 {
 			m.savedDirIdx = (m.savedDirIdx + 1) % len(m.snapshot.SavedDirs)
 			m.inputBuffer = m.snapshot.SavedDirs[m.savedDirIdx]
+			m.inputPristine = false
 		}
 		return m, nil
 
 	case tea.KeyBackspace, tea.KeyDelete:
+		if m.inputPristine {
+			m.inputBuffer = ""
+			m.inputPristine = false
+			return m, nil
+		}
 		runes := []rune(m.inputBuffer)
 		if len(runes) > 0 {
 			m.inputBuffer = string(runes[:len(runes)-1])
@@ -138,10 +151,11 @@ func (m *AppModel) handleModalKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyEnter:
-		val := strings.TrimSpace(m.inputBuffer)
+		val := engine.NormalizeDirectoryPath(m.inputBuffer)
 		mode := m.modalMode
 		m.modalMode = ModalNone
 		m.inputBuffer = ""
+		m.inputPristine = false
 		if val == "" {
 			return m, nil
 		}
@@ -160,9 +174,25 @@ func (m *AppModel) handleModalKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	default:
 		if msg.Type == tea.KeySpace {
+			if m.inputPristine {
+				m.inputBuffer = ""
+				m.inputPristine = false
+			}
 			m.inputBuffer += " "
 		} else if len(msg.Runes) > 0 {
-			m.inputBuffer += string(msg.Runes)
+			var printable strings.Builder
+			for _, r := range msg.Runes {
+				if r >= 32 && r != 127 {
+					printable.WriteRune(r)
+				}
+			}
+			if printable.Len() > 0 {
+				if m.inputPristine {
+					m.inputBuffer = ""
+					m.inputPristine = false
+				}
+				m.inputBuffer += printable.String()
+			}
 		}
 		return m, nil
 	}
@@ -200,6 +230,7 @@ func (m *AppModel) handleMainKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		} else if m.snapshot != nil {
 			m.inputBuffer = m.snapshot.DefaultOutputDir
 		}
+		m.inputPristine = true
 		return m, nil
 
 	case hooks.ActionOpenAddModal:

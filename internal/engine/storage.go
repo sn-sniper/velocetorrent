@@ -35,9 +35,45 @@ type DirectoryValidationResult struct {
 	Suggestions []string `json:"suggestions,omitempty"`
 }
 
+// NormalizeDirectoryPath cleans user-entered directory paths, strips control/quote characters,
+// and resolves concatenated Windows drive roots (e.g. "C:\old\pathD:\Games" -> "D:\Games").
+func NormalizeDirectoryPath(rawPath string) string {
+	// Strip ASCII control characters (e.g., Ctrl+V \x16 or carriage returns)
+	cleaned := strings.Map(func(r rune) rune {
+		if r < 32 || r == 127 {
+			return -1
+		}
+		return r
+	}, rawPath)
+	cleaned = strings.TrimSpace(cleaned)
+	cleaned = strings.Trim(cleaned, `"'`)
+	cleaned = strings.TrimSpace(cleaned)
+
+	// On Windows, if a new drive path (e.g. "D:\Games") was typed or pasted after an existing path
+	// ("C:\Users\...\VeloceTorrentD:\Games"), extract from the last "<DriveLetter>:\" or "<DriveLetter>:/".
+	for i := len(cleaned) - 2; i > 0; i-- {
+		if cleaned[i] == ':' && (cleaned[i+1] == '\\' || cleaned[i+1] == '/') {
+			driveChar := cleaned[i-1]
+			if (driveChar >= 'A' && driveChar <= 'Z') || (driveChar >= 'a' && driveChar <= 'z') {
+				cleaned = cleaned[i-1:]
+				break
+			}
+		}
+	}
+
+	// If user entered a bare Windows drive letter like "D:", normalize to "D:\"
+	if len(cleaned) == 2 && cleaned[1] == ':' {
+		driveChar := cleaned[0]
+		if (driveChar >= 'A' && driveChar <= 'Z') || (driveChar >= 'a' && driveChar <= 'z') {
+			cleaned += `\`
+		}
+	}
+	return cleaned
+}
+
 // ValidateOutputDirectory checks if a path is valid, writable (or creatable), and returns free space + autocomplete suggestions.
 func ValidateOutputDirectory(rawPath string, checkWritable bool) DirectoryValidationResult {
-	trimmed := strings.TrimSpace(rawPath)
+	trimmed := NormalizeDirectoryPath(rawPath)
 	if trimmed == "" {
 		return DirectoryValidationResult{
 			Path:     rawPath,
@@ -48,9 +84,20 @@ func ValidateOutputDirectory(rawPath string, checkWritable bool) DirectoryValida
 	absPath, err := filepath.Abs(trimmed)
 	if err != nil {
 		return DirectoryValidationResult{
-			Path:     rawPath,
+			Path:     trimmed,
 			Valid:    false,
-			ErrorMsg: fmt.Sprintf("invalid path syntax: %v", err),
+			ErrorMsg: fmt.Sprintf("invalid path syntax (%q): %v", trimmed, err),
+		}
+	}
+
+	// If path has a Windows volume name (e.g. "D:"), verify the drive root is mounted
+	if vol := filepath.VolumeName(absPath); len(vol) == 2 && vol[1] == ':' {
+		if _, volErr := os.Stat(vol + `\`); volErr != nil {
+			return DirectoryValidationResult{
+				Path:     absPath,
+				Valid:    false,
+				ErrorMsg: fmt.Sprintf("drive %s\\ is not mounted or accessible", strings.ToUpper(vol)),
+			}
 		}
 	}
 
@@ -190,9 +237,10 @@ type PreallocatedStorage struct {
 
 // NewPreallocatedStorage creates a storage engine with hash workers matching physical CPU count and a sequential disk flusher.
 func NewPreallocatedStorage(meta *TorrentMeta, outputDir string, telemetry *AtomicTorrentTelemetry) (*PreallocatedStorage, error) {
-	absDir, err := filepath.Abs(outputDir)
+	normDir := NormalizeDirectoryPath(outputDir)
+	absDir, err := filepath.Abs(normDir)
 	if err != nil {
-		return nil, fmt.Errorf("invalid output directory %q: %w", outputDir, err)
+		return nil, fmt.Errorf("invalid output directory %q: %w", normDir, err)
 	}
 	if err := EnsureWritableDirectory(absDir); err != nil {
 		return nil, err
@@ -678,9 +726,10 @@ func (s *PreallocatedStorage) ReadPieceFromDisk(pieceIndex int) ([]byte, error) 
 
 // Relocate safely moves pre-allocated and downloaded files to a new output directory.
 func (s *PreallocatedStorage) Relocate(newOutputDir string) error {
-	absNewDir, err := filepath.Abs(newOutputDir)
+	normDir := NormalizeDirectoryPath(newOutputDir)
+	absNewDir, err := filepath.Abs(normDir)
 	if err != nil {
-		return fmt.Errorf("invalid output directory %q: %w", newOutputDir, err)
+		return fmt.Errorf("invalid output directory %q: %w", normDir, err)
 	}
 	if err := EnsureWritableDirectory(absNewDir); err != nil {
 		return err

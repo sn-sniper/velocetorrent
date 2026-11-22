@@ -175,6 +175,28 @@ func main() {
 		fmt.Fprintf(os.Stdout, "THROTTLE PROFILE -> %s (MaxDown=%s MaxUp=%s)\n",
 			snap.Profile, strings.TrimSpace(components.FormatRate(snap.MaxDownBytesPs)), strings.TrimSpace(components.FormatRate(snap.MaxUpBytesPs)))
 
+	case "token", "auth", "web":
+		if err := ensureDaemonRunning(ipcAddr, sockPath, ""); err != nil {
+			exitWithError(err)
+		}
+		tok, tokPath, err := ipc.LoadOrCreateAuthToken("")
+		if err != nil {
+			exitWithError(err)
+		}
+		rawOnly := len(args) > 1 && (args[1] == "--raw" || args[1] == "-r")
+		if rawOnly {
+			fmt.Fprintln(os.Stdout, tok)
+			return
+		}
+		fmt.Fprintln(os.Stdout, "VELOCETORRENT // WEB UI & IPC BEARER TOKEN")
+		fmt.Fprintln(os.Stdout, strings.Repeat("-", 88))
+		fmt.Fprintf(os.Stdout, "DAEMON STATUS : ONLINE (Auto-Spawned vtd on http://%s)\n", ipcAddr)
+		fmt.Fprintf(os.Stdout, "TOKEN FILE    : %s\n", tokPath)
+		fmt.Fprintf(os.Stdout, "BEARER TOKEN  : %s\n", tok)
+		fmt.Fprintf(os.Stdout, "LOCAL WEB UI  : http://%s\n", ipcAddr)
+		fmt.Fprintf(os.Stdout, "AUTH WEB URL  : http://%s/?token=%s\n", ipcAddr, tok)
+		fmt.Fprintln(os.Stdout, strings.Repeat("-", 88))
+
 	case "completion":
 		if err := handleCompletionCommand(args[1:]); err != nil {
 			exitWithError(err)
@@ -303,6 +325,7 @@ func ensureDaemonRunning(ipcAddr string, sockPath string, defaultDir string) err
 	cmd := exec.Command(daemonBin, daemonArgs...)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
+	configureDetachedProcess(cmd)
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to fork background daemon (%s): %w", daemonBin, err)
 	}
@@ -573,6 +596,12 @@ USAGE:
   vt pause <id>                                     Pause transfer by info_hash, prefix, or name
   vt resume <id>                                    Resume transfer by info_hash, prefix, or name
   vt rm <id> [--delete-data]                        Remove transfer from daemon
+  vt dir [<path>]                                   Show or set default output directory
+  vt priority <id> <file-idx> <skip|normal|high>    Set selective file download priority
+  vt throttle <uncapped|background|toggle>          Switch global bandwidth profile
+  vt token [--raw] | vt web                         Auto-start daemon and print Web UI bearer token & URL
+  vt mcp                                            Start Model Context Protocol (MCP) stdio server
+  vt completion <bash|zsh|fish|powershell>          Generate shell autocompletion script
   vt bench [--size-mb 32]                           Run Phase 4 throughput & NVMe/SSD I/O benchmark
   vt register-handlers                              Register vt for magnet: URIs and .torrent MIME types
   vt daemon [--addr 127.0.0.1:7878] [--dir <path>]  Run headless engine daemon in foreground`)
