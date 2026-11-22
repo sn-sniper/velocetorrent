@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: Setup Go 1.26+
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: '>=1.26.0'
 
